@@ -5,7 +5,7 @@ use std::net::{
     SocketAddrV4,
 };
 
-//TODO: implement all the cool little different load balancing decision thingies
+// TODO: implement all the cool little different load balancing decision thingies
 
 //TcpStream::connect(socket: String);
 
@@ -16,11 +16,16 @@ fn ipv4_to_u32(stream: &TcpStream) -> Result<u32, Box<dyn Error>> {
     }
 }
 
-pub fn round_robin(stream: TcpStream, server_sockets: &Vec<SocketAddrV4>) -> Result<(), Box<dyn Error>> {
-    let ip_int = ipv4_to_u32(&stream)?;
-    println!("{}", ip_int);
+//statics
+pub fn ip_hash(stream: TcpStream, server_sockets: &Vec<SocketAddrV4>) -> Result<(), Box<dyn Error>> {
+    let ip_int: usize = ipv4_to_u32(&stream)? as usize;
+    let idx: usize = ip_int % server_sockets.len();
+    let destination = server_sockets[idx];
+
     Ok(())
 }
 
 // pub fn round_robin() {}
 // pub fn weighted_round_robin() {}
+
+//dynamics
