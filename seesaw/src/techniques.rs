@@ -1,9 +1,9 @@
 use std::error::Error;
-use std::net::{
-    TcpStream,
-    IpAddr,
-    SocketAddrV4,
+use tokio::{
+    io::copy_bidirectional,
+    net::TcpStream,
 };
+use std::net::IpAddr;
 
 // TODO: implement all the cool little different load balancing decision thingies
 
@@ -16,12 +16,19 @@ fn ipv4_to_u32(stream: &TcpStream) -> Result<u32, Box<dyn Error>> {
     }
 }
 
+async fn redirect(stream: &mut TcpStream, socket: &str) -> Result<(), Box<dyn Error>>{
+    let mut backend = TcpStream::connect(socket).await?;
+    copy_bidirectional(stream, &mut backend).await?;
+    Ok(())
+}
+
 //statics
-pub fn ip_hash(stream: TcpStream, server_sockets: &Vec<SocketAddrV4>) -> Result<(), Box<dyn Error>> {
+pub async fn ip_hash(mut stream: TcpStream, server_sockets: &Vec<&str>) -> Result<(), Box<dyn Error>> {
     let ip_int: usize = ipv4_to_u32(&stream)? as usize;
     let idx: usize = ip_int % server_sockets.len();
-    let destination = server_sockets[idx];
-
+    let destination: &str = server_sockets[idx];
+    println!("Redirecting to {}", destination);
+    redirect(&mut stream, destination).await?;
     Ok(())
 }
 
