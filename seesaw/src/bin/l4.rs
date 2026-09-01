@@ -13,14 +13,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "127.0.0.1:8002",
         "127.0.0.1:8003",
     ];
-    let weights: Vec<usize> = vec![1, 2, 3]; //for techniques::weighted_round_robin
-
     let listener = TcpListener::bind(listener_socket).await?;
-    let mut next = 0; //for techniques::round_robin
+
+    let mut next = 0; //for techniques::round_robin and techniques::weighted_round_robin
+    let weights: Vec<usize> = vec![1, 2, 3]; //for techniques::weighted_round_robin
+    let sequence: Vec<usize> = techniques::make_sequence(weights); //for techniques::weighted_round_robin;
 
     loop {
         let (stream, _) = listener.accept().await?;
-        next = techniques::round_robin(stream, &server_sockets, next).await?;
+        next = techniques::weighted_round_robin(stream, &server_sockets, &sequence, next).await?;
+        // next = techniques::round_robin(stream, &server_sockets, next).await?;
         // techniques::ip_hash(stream?, &server_sockets).await?;
     }
 }
